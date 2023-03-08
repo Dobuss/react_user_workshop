@@ -3,13 +3,18 @@ import {UserDetails} from './UserDetails';
 import { User } from "./User";
 import * as userService from '../services/userService';
 import { UserCreate } from './UserCreate';
+import { UserDelete } from './UserDelete';
 
 export const UserList = ({
   users,
-  onUserCreateSubmit
+  onUserCreateSubmit,
+  onUserDelete,
+  onUserUpdateSubmit
 }) => {
 
   const [selectedUser, setSelectedUser] = useState(null);
+  const [showDeleteUser, setShowDeleteUser] = useState(null);
+  const [showEditUser, setShowEditUser] = useState(null);
   const [showAddUser, setShowAddUser] = useState(false);
 
   const onInfoClick = async (userid) => {
@@ -19,6 +24,8 @@ export const UserList = ({
   const onClose = () => {
     setSelectedUser(null);
     setShowAddUser(false);
+    setShowDeleteUser(null);
+    setShowEditUser(null);
   }
 
   const onUserAddClick = () => {
@@ -29,11 +36,32 @@ export const UserList = ({
     onUserCreateSubmit(e);
     setShowAddUser(false);
   }
+  const onUserUpdateSubmitHandler = (e, userId) => {
+    onUserUpdateSubmit(e, userId);
+    setShowEditUser(null);
+
+  }
+
+  const onDeleteClick = (userId) => {
+    setShowDeleteUser(userId);
+  }
+
+  const onDeleteHandler = () => {
+    onUserDelete(showDeleteUser);
+    onClose();
+  }
+
+  const onEditClick = async (userId) => {
+    const user = await userService.getOne(userId);
+    setShowEditUser(user);
+  }
 
   return (
     <>
     {selectedUser && <UserDetails {...selectedUser} onClose={onClose} />}
     {showAddUser && <UserCreate onClose={onClose} onUserCreateSubmit={onUserCreateSubmitHandler}/>}
+    {showDeleteUser && <UserDelete onClose={onClose} onDelete={onDeleteHandler}/>}
+    {showEditUser && <UserCreate user={showEditUser} onClose={onClose} onUserCreateSubmit={onUserUpdateSubmitHandler}/>}
     <div className="table-wrapper">
      {/* <div className="loading-shade">
         <div className="spinner"></div>
@@ -194,7 +222,15 @@ export const UserList = ({
           </tr>
         </thead>
         <tbody>
-          {users.map(u => <User key={u._id} {...u} onInfoClick={onInfoClick}/>)}
+          {users.map(u => 
+          <User
+            {...u} 
+            key={u._id} 
+            onInfoClick={onInfoClick}
+            onDeleteClick = {onDeleteClick}
+            onEditClick = {onEditClick}
+            />
+            )}
         </tbody>
       </table>
     </div>
